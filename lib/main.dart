@@ -536,8 +536,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (diceRoll == 0 ||
         players[currentPlayer]['cosmicBoosts'] <= 0 ||
         hasUsedBoostThisTurn ||
-        isRolling)
+        isRolling) {
       return;
+    }
     setState(() {
       players[currentPlayer]['cosmicBoosts']--;
       hasUsedBoostThisTurn = true;
@@ -1094,8 +1095,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                         "Tapped board piece at [$x, $y] for ${players[playerIndex]['name']}",
                                       );
                                       movePiece(
-                                        playerIndex!,
-                                        pieceIndex!,
+                                        playerIndex,
+                                        pieceIndex,
                                         isShortcut:
                                             hasUsedBoostThisTurn &&
                                             status.contains('shortcut'),
