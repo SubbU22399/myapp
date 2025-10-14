@@ -24,9 +24,9 @@ class GameBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 350,
-      height: 350,
+    // Use AspectRatio to maintain the game board's square shape while fitting it into the available space.
+    return AspectRatio(
+      aspectRatio: 1,
       // Creates a grid view for the game board.
       child: GridView.builder(
         physics: const NeverScrollableScrollPhysics(),
@@ -67,17 +67,21 @@ class GameBoard extends StatelessWidget {
               margin: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 color: isHome
-                    ? Colors.blue.withOpacity(0.8)
+                    ? players.firstWhere((p) => p.homeIndex == homes.indexWhere((h) => h[0] == x && h[1] == y)).color.withOpacity(0.3)
                     : isSafe
-                        ? Colors.blue.withOpacity(0.5)
+                        ? Colors.yellow.withOpacity(0.4)
                         : isFlag
                             ? Colors.purple.withOpacity(0.9)
-                            : Colors.yellow.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(5),
+                            : Colors.black.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isFlag ? Colors.yellow : Colors.white.withOpacity(0.1),
+                  width: 1.5,
+                ),
                 boxShadow: isFlag || isSafe
                     ? [
                         BoxShadow(
-                          color: Colors.white.withOpacity(0.3),
+                          color: isFlag ? Colors.purple.withOpacity(0.5) : Colors.yellow.withOpacity(0.3),
                           blurRadius: 10,
                         ),
                       ]
@@ -98,7 +102,6 @@ class GameBoard extends StatelessWidget {
                                 ? '🌍'
                                 : '',
                         style: const TextStyle(
-                          color: Colors.white,
                           fontSize: 20,
                         ),
                       ),

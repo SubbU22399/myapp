@@ -20,12 +20,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   // A list of players in the game.
   late List<Player> players;
   // Animation controllers and animations for the pieces, dice, and indicators.
-  late AnimationController _pieceAnimationController;
-  late Animation<double> _pieceAnimation;
   late AnimationController _diceAnimationController;
   late Animation<double> _diceAnimation;
-  late AnimationController _indicatorAnimationController;
-  late Animation<double> _indicatorAnimation;
   // The result of the dice roll.
   int diceRoll = 0;
   // Whether the dice is currently rolling.
@@ -43,18 +39,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     // Initializes the animation controllers and animations.
-    _pieceAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _pieceAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(_pieceAnimationController)
-      ..addListener(() {
-        if (mounted) setState(() {});
-      });
-
     _diceAnimationController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
@@ -67,14 +51,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       ..addListener(() {
         if (mounted) setState(() {});
       });
-
-    _indicatorAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 700),
-      vsync: this,
-    )..repeat(reverse: true);
-    _indicatorAnimation = Tween<double>(begin: 1.0, end: 1.5).animate(
-      CurvedAnimation(parent: _indicatorAnimationController, curve: Curves.easeInOut),
-    );
 
     // Initializes the players.
     List<Player> allPlayers = [
@@ -118,9 +94,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     // Disposes the animation controllers.
-    _pieceAnimationController.dispose();
     _diceAnimationController.dispose();
-    _indicatorAnimationController.dispose();
     super.dispose();
   }
 
@@ -246,9 +220,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       int currentIndex = path.indexWhere(
         (p) => p[0] == piece[0] && p[1] == piece[1],
       );
-
-      // Starts the piece move animation.
-      _pieceAnimationController.forward(from: 0);
 
       // If the piece is out of play, it can be moved if the dice roll is 6.
       if (piece[0] < 0 || piece[0] >= gridSize || piece[1] < 0 || piece[1] >= gridSize) {
@@ -395,14 +366,30 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Game Over!"),
+          backgroundColor: Colors.deepPurple.withOpacity(0.9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Colors.yellow, width: 2),
+          ),
+          title: Center(
+            child: Text(
+              "Victory!",
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("${players[currentPlayer].name} has won the game!"),
-              const SizedBox(height: 10),
-              ...players.map((p) => Text("${p.name}: ${p.score} points")),
+              Text(
+                "${players[currentPlayer].name} has conquered the cosmos!",
+                style: Theme.of(context).textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ...players.map((p) => Text(
+                    "${p.name}: ${p.score} points",
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  )),
             ],
           ),
           actions: <Widget>[
@@ -466,7 +453,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               }
                             },
                             child: AnimalPiece(
-                                homeIndex: homeIndex, animation: _pieceAnimation),
+                                homeIndex: homeIndex, animation: const AlwaysStoppedAnimation(0)),
                           )
                         : null,
                   ),
@@ -504,7 +491,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                               }
                             },
                             child: AnimalPiece(
-                                homeIndex: homeIndex, animation: _pieceAnimation),
+                                homeIndex: homeIndex, animation: const AlwaysStoppedAnimation(0)),
                           )
                         : null,
                   ),
@@ -517,8 +504,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cosmo Quest'),
-        backgroundColor: Colors.deepPurple,
+        title: Text('Cosmo Quest', style: Theme.of(context).textTheme.headlineMedium),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -529,10 +518,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ),
         ),
         child: LayoutBuilder(builder: (context, constraints) {
-          bool isWide = constraints.maxWidth > 600;
+          bool isWide = constraints.maxWidth > 700;
           return Stack(
             children: [
-              // Creates a starry background.
               Positioned.fill(
                 child: AnimatedContainer(
                   duration: const Duration(seconds: 5),
@@ -546,6 +534,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
               ),
               SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
                 child: isWide ? _buildWideLayout() : _buildNarrowLayout(),
               ),
             ],
@@ -583,7 +572,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             GameBoard(
               players: players,
               currentPlayer: currentPlayer,
-              pieceAnimation: _pieceAnimation,
+              pieceAnimation: const AlwaysStoppedAnimation(0),
               onPieceTapped: (playerIndex, pieceIndex) {
                 if (!isRolling &&
                     diceRoll > 0 &&
@@ -600,9 +589,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             buildOutOfPlayArea(0, Alignment.center, true), // Blue
             const SizedBox(height: 20),
             _buildControls(),
-            const SizedBox(height: 10),
-            _buildStatusIndicators(),
             const SizedBox(height: 20),
+            _buildStatusIndicators(),
           ],
         ),
         Column(
@@ -635,7 +623,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 GameBoard(
                   players: players,
                   currentPlayer: currentPlayer,
-                  pieceAnimation: _pieceAnimation,
+                  pieceAnimation: const AlwaysStoppedAnimation(0),
                   onPieceTapped: (playerIndex, pieceIndex) {
                     if (!isRolling &&
                         diceRoll > 0 &&
@@ -658,152 +646,130 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         ),
         const SizedBox(height: 20),
         _buildControls(),
-        const SizedBox(height: 10),
-        _buildStatusIndicators(),
         const SizedBox(height: 20),
+        _buildStatusIndicators(),
       ],
     );
   }
 
   Widget _buildControls() {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 10,
-      runSpacing: 10,
-      children: [
-        // The button to roll the dice.
-        ElevatedButton(
-          onPressed: diceRoll == 0 && !isRolling ? rollDice : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 12,
+        runSpacing: 12,
+        children: [
+          ElevatedButton.icon(
+            onPressed: diceRoll == 0 && !isRolling ? rollDice : null,
+            icon: const Icon(Icons.casino, color: Colors.white),
+            label: const Text('Roll Dice'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
           ),
-          child: const Text(
-            'Roll Dice',
-            style: TextStyle(color: Colors.white),
+          Dice(
+            animation: _diceAnimation,
+            isRolling: isRolling,
+            diceRoll: diceRoll,
           ),
-        ),
-        // The dice widget.
-        Dice(
-          animation: _diceAnimation,
-          isRolling: isRolling,
-          diceRoll: diceRoll,
-        ),
-        // The buttons to use the cosmic boosts.
-        ElevatedButton(
-          onPressed: diceRoll != 0 &&
-                  players[currentPlayer].cosmicBoosts > 0 &&
-                  !hasUsedBoostThisTurn &&
-                  !isRolling
-              ? () => useCosmicBoost('reroll')
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
+          ..._buildCosmicBoostButtons(),
+          ElevatedButton.icon(
+            onPressed: !isRolling ? resetGame : null,
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            label: const Text('Reset'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.withOpacity(0.8),
+            ),
           ),
-          child: const Text(
-            'Reroll',
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: diceRoll != 0 &&
-                  players[currentPlayer].cosmicBoosts > 0 &&
-                  !hasUsedBoostThisTurn &&
-                  !isRolling
-              ? () => useCosmicBoost('shortcut')
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
-          ),
-          child: const Text(
-            'Shortcut',
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-        ElevatedButton(
-          onPressed: diceRoll != 0 &&
-                  players[currentPlayer].cosmicBoosts > 0 &&
-                  !hasUsedBoostThisTurn &&
-                  !isRolling
-              ? () => useCosmicBoost('double')
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange,
-          ),
-          child: const Text(
-            'Double',
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-        // The button to reset the game.
-        ElevatedButton(
-          onPressed: !isRolling ? resetGame : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-          ),
-          child: const Text(
-            'Reset',
-            style: TextStyle(color: Colors.white),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  List<Widget> _buildCosmicBoostButtons() {
+    bool canUseBoost = diceRoll != 0 &&
+        players[currentPlayer].cosmicBoosts > 0 &&
+        !hasUsedBoostThisTurn &&
+        !isRolling;
+    return [
+      ElevatedButton(
+        onPressed: canUseBoost ? () => useCosmicBoost('reroll') : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          foregroundColor: Colors.black,
+        ),
+        child: const Text('Reroll'),
+      ),
+      ElevatedButton(
+        onPressed: canUseBoost ? () => useCosmicBoost('shortcut') : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          foregroundColor: Colors.black,
+        ),
+        child: const Text('Shortcut'),
+      ),
+      ElevatedButton(
+        onPressed: canUseBoost ? () => useCosmicBoost('double') : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          foregroundColor: Colors.black,
+        ),
+        child: const Text('Double'),
+      ),
+    ];
   }
 
   Widget _buildStatusIndicators() {
     return Column(
       children: [
-        // Displays the number of cosmic boosts the current player has.
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Cosmic Boosts: ',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.white,
-                shadows: [
-                  Shadow(color: Colors.yellow, blurRadius: 5),
-                ],
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.yellow.withOpacity(0.5), width: 1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Cosmic Boosts: ',
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
-            ),
-            for (int i = 0; i < players[currentPlayer].cosmicBoosts; i++)
-              const Icon(Icons.star, color: Colors.yellow, size: 20),
-          ],
+              for (int i = 0; i < players[currentPlayer].cosmicBoosts; i++)
+                const Icon(Icons.star, color: Colors.yellow, size: 20),
+            ],
+          ),
         ),
-        const SizedBox(height: 10),
-        // Displays the current player's turn and score.
-        AnimatedBuilder(
-          animation: _indicatorAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _indicatorAnimation.value,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: players[currentPlayer].color.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  "${players[currentPlayer].name}'s Turn (Score: ${players[currentPlayer].score})",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+        const SizedBox(height: 15),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: players[currentPlayer].color.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: players[currentPlayer].color.withOpacity(0.6),
+                blurRadius: 10,
+                spreadRadius: 2,
               ),
-            );
-          },
+            ],
+          ),
+          child: Text(
+            "${players[currentPlayer].name}'s Turn (Score: ${players[currentPlayer].score})",
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 20),
+          ),
         ),
-        const SizedBox(height: 10),
-        // Displays the status message.
+        const SizedBox(height: 15),
         Text(
           status,
-          style: const TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            shadows: [Shadow(color: Colors.yellow, blurRadius: 5)],
-          ),
+          style: Theme.of(context).textTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),
       ],
@@ -815,15 +781,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 class StarryBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.6);
+    final paint = Paint()..color = Colors.white.withOpacity(0.8);
     final random = Random();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 150; i++) {
       canvas.drawCircle(
         Offset(
           random.nextDouble() * size.width,
           random.nextDouble() * size.height,
         ),
-        random.nextDouble() * 2,
+        random.nextDouble() * 2.5,
         paint,
       );
     }

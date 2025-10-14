@@ -1,4 +1,3 @@
-
 import 'dart:math';
 import 'package:flutter/material.dart';
 
@@ -21,94 +20,100 @@ class Dice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If the dice is rolling, display a random number between 1 and 6,
-    // otherwise display the actual dice roll result.
-    final rollValue = isRolling ? (Random().nextInt(6) + 1) : diceRoll;
-    // Use AnimatedBuilder to rebuild the widget when the animation value changes.
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        // Apply a 3D transformation to the dice container.
-        return Transform(
-          // Creates a 3D rolling effect on the dice.
-          transform: Matrix4.identity()
-            ..setEntry(3, 2, 0.001) // Add perspective to the transformation.
-            ..rotateX(animation.value * pi) // Rotate around the X-axis.
-            ..rotateY(animation.value * pi / 2) // Rotate around the Y-axis.
-            ..rotateZ(animation.value * pi / 4), // Rotate around the Z-axis.
-          alignment: Alignment.center,
-          // The visual representation of the dice.
-          child: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              // Add a gradient for a more realistic look.
-              gradient: LinearGradient(
-                colors: [Colors.white, Colors.grey.shade300],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              // Add a border to the dice.
-              border: Border.all(color: Colors.black, width: 1.5),
-              // Round the corners of the dice.
-              borderRadius: BorderRadius.circular(12),
-              // Add a shadow for a 3D effect.
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 8,
-                  offset: const Offset(4, 4),
+    return LayoutBuilder(builder: (context, constraints) {
+      double size = min(constraints.maxWidth, constraints.maxHeight);
+      if (size < 20) size = 60; // a default size if no constraint is given
+      // If the dice is rolling, display a random number between 1 and 6,
+      // otherwise display the actual dice roll result.
+      final rollValue = isRolling ? (Random().nextInt(6) + 1) : diceRoll;
+      // Use AnimatedBuilder to rebuild the widget when the animation value changes.
+      return AnimatedBuilder(
+        animation: animation,
+        builder: (context, child) {
+          // Apply a 3D transformation to the dice container.
+          return Transform(
+            // Creates a 3D rolling effect on the dice.
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001) // Add perspective to the transformation.
+              ..rotateX(animation.value * pi) // Rotate around the X-axis.
+              ..rotateY(animation.value * pi / 2) // Rotate around the Y-axis.
+              ..rotateZ(animation.value * pi / 4), // Rotate around the Z-axis.
+            alignment: Alignment.center,
+            // The visual representation of the dice.
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                // Add a gradient for a more realistic look.
+                gradient: LinearGradient(
+                  colors: [Colors.white, Colors.grey.shade300],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
+                // Add a border to the dice.
+                border: Border.all(color: Colors.black, width: size * 0.025),
+                // Round the corners of the dice.
+                borderRadius: BorderRadius.circular(size * 0.2),
+                // Add a shadow for a 3D effect.
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.4),
+                    blurRadius: size * 0.13,
+                    offset: Offset(size * 0.07, size * 0.07),
+                  ),
+                ],
+              ),
+              // Center the dice roll number.
+              child: Center(
+                child: _DiceFace(rollValue, size: size * 0.8),
+              ),
             ),
-            // Center the dice roll number.
-            child: Center(
-              child: _DiceFace(rollValue),
-            ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    });
   }
 }
 
 class _DiceFace extends StatelessWidget {
   final int value;
+  final double size;
 
-  const _DiceFace(this.value);
+  const _DiceFace(this.value, {required this.size});
 
   @override
   Widget build(BuildContext context) {
-    return switch (value) {
-      1 => const _DiceDot(count: 1),
-      2 => const _DiceDot(count: 2),
-      3 => const _DiceDot(count: 3),
-      4 => const _DiceDot(count: 4),
-      5 => const _DiceDot(count: 5),
-      6 => const _DiceDot(count: 6),
-      _ => const SizedBox.shrink(),
-    };
+    return SizedBox(
+      width: size,
+      height: size,
+      child: switch (value) {
+        1 => _DiceDot(count: 1, size: size),
+        2 => _DiceDot(count: 2, size: size),
+        3 => _DiceDot(count: 3, size: size),
+        4 => _DiceDot(count: 4, size: size),
+        5 => _DiceDot(count: 5, size: size),
+        6 => _DiceDot(count: 6, size: size),
+        _ => const SizedBox.shrink(),
+      },
+    );
   }
 }
 
 class _DiceDot extends StatelessWidget {
   final int count;
+  final double size;
 
-  const _DiceDot({required this.count});
+  const _DiceDot({required this.count, required this.size});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: GridView.count(
-        crossAxisCount: 3,
-        mainAxisSpacing: 4,
-        crossAxisSpacing: 4,
-        children: List.generate(9, (index) {
-          return _buildDot(index);
-        }),
-      ),
+    return GridView.count(
+      crossAxisCount: 3,
+      mainAxisSpacing: size * 0.1,
+      crossAxisSpacing: size * 0.1,
+      children: List.generate(9, (index) {
+        return _buildDot(index);
+      }),
     );
   }
 

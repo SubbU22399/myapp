@@ -17,52 +17,70 @@ class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cosmo Quest - Select Players'),
-        backgroundColor: Colors.deepPurple,
+        title: Text('Cosmo Quest', style: Theme.of(context).textTheme.headlineMedium),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: Container(
         // Creates a gradient background.
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.black, Colors.blueGrey],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            colors: [Colors.black, Colors.blueGrey.shade900],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                'Number of Players:',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.white,
-                  shadows: [Shadow(color: Colors.yellow, blurRadius: 10)],
+              Text(
+                'Select Your Warriors',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 40),
+              // A dropdown menu to select the number of players.
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.yellow, width: 2),
+                ),
+                child: DropdownButton<int>(
+                  value: numPlayers,
+                  items: const [
+                    DropdownMenuItem(
+                      value: 2,
+                      child: Text('2 Warriors', style: TextStyle(color: Colors.white)),
+                    ),
+                    DropdownMenuItem(
+                      value: 3,
+                      child: Text('3 Warriors', style: TextStyle(color: Colors.white)),
+                    ),
+                    DropdownMenuItem(
+                      value: 4,
+                      child: Text('4 Warriors', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      numPlayers = value!;
+                    });
+                  },
+                  dropdownColor: Colors.deepPurple,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  underline: const SizedBox(),
+                  icon: const Icon(Icons.arrow_downward, color: Colors.yellow),
                 ),
               ),
-              // A dropdown menu to select the number of players.
-              DropdownButton<int>(
-                value: numPlayers,
-                items: const [
-                  DropdownMenuItem(value: 2, child: Text('2 Players')),
-                  DropdownMenuItem(value: 3, child: Text('3 Players')),
-                  DropdownMenuItem(value: 4, child: Text('4 Players')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    numPlayers = value!;
-                  });
-                },
-                dropdownColor: Colors.deepPurple,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 40),
               // A button to start the game.
               ElevatedButton(
                 onPressed: () {
                   // Navigates to the game screen with the selected number of players.
-                  Navigator.pushReplacement(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => GameScreen(numPlayers: numPlayers),
@@ -71,16 +89,11 @@ class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.yellow,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  textStyle: const TextStyle(fontSize: 18),
+                  foregroundColor: Colors.black,
+                  elevation: 10,
+                  shadowColor: Colors.yellow.withOpacity(0.5),
                 ),
-                child: const Text(
-                  'Start Game',
-                  style: TextStyle(color: Colors.black),
-                ),
+                child: const Text('Embark on the Quest'),
               ),
             ],
           ),
