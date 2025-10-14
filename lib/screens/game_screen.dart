@@ -8,9 +8,9 @@ import '../widgets/game_board.dart';
 
 // The main screen of the game, where the game is played.
 class GameScreen extends StatefulWidget {
-  // The number of players in the game.
-  final int numPlayers;
-  const GameScreen({super.key, required this.numPlayers});
+  // The list of players in the game.
+  final List<Player> players;
+  const GameScreen({super.key, required this.players});
 
   @override
   _GameScreenState createState() => _GameScreenState();
@@ -60,39 +60,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       });
 
     // Initializes the players.
-    List<Player> allPlayers = [
-      Player(
-        color: Colors.blue,
-        name: 'Blue',
-        pieces: [for (var i = 0; i < 4; i++) outOfPlayPositions[0][i]],
-        homeIndex: 0,
-      ),
-      Player(
-        color: Colors.yellow,
-        name: 'Yellow',
-        pieces: [for (var i = 0; i < 4; i++) outOfPlayPositions[1][i]],
-        homeIndex: 1,
-      ),
-      Player(
-        color: Colors.red,
-        name: 'Red',
-        pieces: [for (var i = 0; i < 4; i++) outOfPlayPositions[2][i]],
-        homeIndex: 2,
-      ),
-      Player(
-        color: Colors.green,
-        name: 'Green',
-        pieces: [for (var i = 0; i < 4; i++) outOfPlayPositions[3][i]],
-        homeIndex: 3,
-      ),
-    ];
-
-    // Selects the players based on the number of players selected.
-    if (widget.numPlayers == 2) {
-      players = [allPlayers[0], allPlayers[2]]; // Blue vs Red
-    } else {
-      players = allPlayers.take(widget.numPlayers).toList();
-    }
+    players = widget.players;
 
     // Sets the initial status message.
     status = "${players[currentPlayer].name}'s Turn - Roll to Start";
