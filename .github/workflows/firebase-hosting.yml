@@ -19,6 +19,9 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: flutter pub upgrade
+        run: flutter pub upgrade
       
       - name: clean flutter
         run: flutter clean
