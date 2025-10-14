@@ -52,6 +52,20 @@ class GameBoard extends StatelessWidget {
               }
             }
           }
+          
+          Color getCellColor() {
+            if (isHome) {
+              int homeIndex = homes.indexWhere((h) => h[0] == x && h[1] == y);
+              var activePlayersWithHome = players.where((p) => p.homeIndex == homeIndex);
+              if (activePlayersWithHome.isNotEmpty) {
+                return activePlayersWithHome.first.color.withOpacity(0.3);
+              }
+              return Colors.black.withOpacity(0.2); // Inactive home color
+            }
+            if (isSafe) return Colors.yellow.withOpacity(0.4);
+            if (isFlag) return Colors.purple.withOpacity(0.9);
+            return Colors.black.withOpacity(0.2);
+          }
 
           return GestureDetector(
             onTap: () {
@@ -66,13 +80,7 @@ class GameBoard extends StatelessWidget {
             child: Container(
               margin: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                color: isHome
-                    ? players.firstWhere((p) => p.homeIndex == homes.indexWhere((h) => h[0] == x && h[1] == y)).color.withOpacity(0.3)
-                    : isSafe
-                        ? Colors.yellow.withOpacity(0.4)
-                        : isFlag
-                            ? Colors.purple.withOpacity(0.9)
-                            : Colors.black.withOpacity(0.2),
+                color: getCellColor(),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isFlag ? Colors.yellow : Colors.white.withOpacity(0.1),
@@ -122,11 +130,11 @@ class GameBoard extends StatelessWidget {
       alignment: Alignment.center,
       children: List.generate(pieces.length, (i) {
         return Positioned(
-          top: i * 10.0,
-          left: i * 10.0,
+          top: i * 5.0,
+          left: i * 5.0,
           child: SizedBox(
-            width: 40,
-            height: 40,
+            width: 30,
+            height: 30,
             child: AnimalPiece(
               homeIndex: players[pieces[i]['playerIndex']!].homeIndex,
               animation: pieceAnimation,
