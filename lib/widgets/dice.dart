@@ -1,3 +1,4 @@
+
 import 'dart:math';
 import 'package:flutter/material.dart';
 
@@ -22,7 +23,14 @@ class Dice extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       double size = min(constraints.maxWidth, constraints.maxHeight);
-      if (size < 20) size = 60; // a default size if no constraint is given
+
+      // If the available space is unconstrained or too small, provide a sensible default size.
+      if (size.isInfinite || size < 40) {
+        size = 60.0;
+      }
+      // We also cap the maximum size to prevent it from being too large on wide screens.
+      size = min(size, 80.0);
+
       // If the dice is rolling, display a random number between 1 and 6,
       // otherwise display the actual dice roll result.
       final rollValue = isRolling ? (Random().nextInt(6) + 1) : diceRoll;
