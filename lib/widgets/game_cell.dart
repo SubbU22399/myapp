@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/player.dart';
 import '../utils/constants.dart';
-import 'stacked_pieces.dart';
+import 'animal_piece.dart';
 
 class GameCell extends StatelessWidget {
   final int x;
   final int y;
   final List<Player> players;
-  final Animation<double> pieceAnimation;
+  final int currentPlayerIndex;
+  final int diceRoll;
   final Function(int, int) onPieceTapped;
 
   const GameCell({
@@ -15,7 +16,8 @@ class GameCell extends StatelessWidget {
     required this.x,
     required this.y,
     required this.players,
-    required this.pieceAnimation,
+    required this.currentPlayerIndex,
+    required this.diceRoll,
     required this.onPieceTapped,
   });
 
@@ -38,6 +40,14 @@ class GameCell extends StatelessWidget {
       }
     }
 
+    bool isSelectable = false;
+    if (piecesInCell.isNotEmpty) {
+      final playerIndexOfPiece = piecesInCell[0]['playerIndex']!;
+      if (playerIndexOfPiece == currentPlayerIndex && diceRoll > 0) {
+        isSelectable = true;
+      }
+    }
+
     return GestureDetector(
       onTap: () {
         if (piecesInCell.isNotEmpty) {
@@ -56,12 +66,14 @@ class GameCell extends StatelessWidget {
             color: isFlag ? Colors.yellow : Colors.white.withOpacity(0.1),
             width: 1.5,
           ),
-          boxShadow: isFlag || isSafe
+          boxShadow: isFlag || isSafe || isSelectable
               ? [
                   BoxShadow(
-                    color: isFlag
-                        ? Colors.purple.withOpacity(0.5)
-                        : Colors.yellow.withOpacity(0.3),
+                    color: isSelectable
+                        ? Colors.yellow.withOpacity(0.8)
+                        : (isFlag
+                            ? Colors.purple.withOpacity(0.5)
+                            : Colors.yellow.withOpacity(0.3)),
                     blurRadius: 10,
                   ),
                 ]
@@ -69,10 +81,9 @@ class GameCell extends StatelessWidget {
         ),
         child: Center(
           child: piecesInCell.isNotEmpty
-              ? StackedPieces(
-                  pieces: piecesInCell,
-                  players: players,
-                  pieceAnimation: pieceAnimation,
+              ? AnimalPiece(
+                  homeIndex: players[piecesInCell[0]['playerIndex']!].homeIndex,
+                  isSelectable: isSelectable,
                 )
               : Text(
                   isSafe

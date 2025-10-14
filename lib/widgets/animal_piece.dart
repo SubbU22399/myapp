@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 class AnimalPiece extends StatelessWidget {
   // The index of the player's home base.
   final int homeIndex;
-  // The animation for the piece.
-  final Animation<double> animation;
+  // A boolean to indicate if the piece is selectable.
+  final bool isSelectable;
 
   const AnimalPiece({
     super.key,
     required this.homeIndex,
-    required this.animation,
+    this.isSelectable = false, // Default to not selectable
   });
 
   @override
@@ -27,8 +27,19 @@ class AnimalPiece extends StatelessWidget {
       Colors.red,
     ];
 
-    return ScaleTransition(
-      scale: animation,
+    return Container(
+      decoration: isSelectable
+          ? BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.yellow.withOpacity(0.8),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
+            )
+          : null,
       child: Icon(
         animalIcons[homeIndex],
         color: animalColors[homeIndex],

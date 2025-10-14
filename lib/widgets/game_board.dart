@@ -8,17 +8,17 @@ class GameBoard extends StatelessWidget {
   // The list of players in the game.
   final List<Player> players;
   // The index of the current player.
-  final int currentPlayer;
-  // The animation for the animal pieces.
-  final Animation<double> pieceAnimation;
+  final int currentPlayerIndex;
+  // The current roll of the dice.
+  final int diceRoll;
   // A callback function that is called when a piece is tapped.
   final Function(int, int) onPieceTapped;
 
   const GameBoard({
     super.key,
     required this.players,
-    required this.currentPlayer,
-    required this.pieceAnimation,
+    required this.currentPlayerIndex,
+    required this.diceRoll,
     required this.onPieceTapped,
   });
 
@@ -45,7 +45,8 @@ class GameBoard extends StatelessWidget {
               x: x,
               y: y,
               players: players,
-              pieceAnimation: pieceAnimation,
+              currentPlayerIndex: currentPlayerIndex,
+              diceRoll: diceRoll,
               onPieceTapped: onPieceTapped,
             );
           },

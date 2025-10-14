@@ -6,9 +6,8 @@ import 'game_screen.dart';
 /// A screen that allows users to select players for the game.
 ///
 /// This screen enables users to enter their names, choose a color, and add
-/// themselves to the game. It enforces a minimum and maximum of 2
-/// players. Once the desired number of players have joined, the game can be
-/// started.
+/// themselves to the game. It's designed for a two-player game. Once both
+/// players have joined, the game can be started.
 class PlayerSelectionScreen extends StatefulWidget {
   const PlayerSelectionScreen({super.key});
 
@@ -17,11 +16,15 @@ class PlayerSelectionScreen extends StatefulWidget {
 }
 
 class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
-  // A list to hold the players that have been added to the game.
-  final List<Player> _players = [];
-  // A controller for the text field where users enter their name.
-  final _nameController = TextEditingController();
-  // A list of colors for the players.
+  // Controllers for the player name text fields.
+  final _player1NameController = TextEditingController();
+  final _player2NameController = TextEditingController();
+
+  // The selected players.
+  Player? _player1;
+  Player? _player2;
+
+  // The list of available colors for the players.
   final List<Color> _playerColors = const [
     Colors.blue,
     Colors.red,
@@ -29,44 +32,30 @@ class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
 
   @override
   void dispose() {
-    // Dispose the controller when the widget is removed from the widget tree.
-    _nameController.dispose();
+    // Dispose the controllers when the widget is removed from the widget tree.
+    _player1NameController.dispose();
+    _player2NameController.dispose();
     super.dispose();
   }
 
-  /// Adds a new player to the game.
-  ///
-  /// This method is called when a user selects a color. It validates that the
-  /// player name is not empty, the maximum number of players has not been
-  /// reached, and the selected color is not already in use.
-  void _addPlayer(Color color, int homeIndex) {
-    final playerName = _nameController.text.trim();
-    if (playerName.isNotEmpty &&
-        _players.length < 2 &&
-        !_players.any((p) => p.homeIndex == homeIndex)) {
-      setState(() {
-        _players.add(
-          Player(
-            name: playerName,
-            homeIndex: homeIndex,
-            color: color,
-            // Initialize the player's pieces to be off the board.
-            pieces: List.generate(4, (i) => outOfPlayPositions[homeIndex][i]),
-          ),
-        );
-        // Clear the text field after adding a player.
-        _nameController.clear();
-      });
-    }
-  }
-
-  /// Removes a player from the game.
-  ///
-  /// This method is called when a user taps the remove icon next to a player's
-  /// name.
-  void _removePlayer(int homeIndex) {
+  /// Adds or updates a player.
+  void _updatePlayer(int playerIndex, String name) {
     setState(() {
-      _players.removeWhere((p) => p.homeIndex == homeIndex);
+      if (playerIndex == 0) {
+        _player1 = Player(
+          name: name,
+          homeIndex: 0,
+          color: _playerColors[0],
+          pieces: List.generate(4, (i) => outOfPlayPositions[0][i]),
+        );
+      } else {
+        _player2 = Player(
+          name: name,
+          homeIndex: 1,
+          color: _playerColors[1],
+          pieces: List.generate(4, (i) => outOfPlayPositions[1][i]),
+        );
+      }
     });
   }
 
@@ -75,54 +64,25 @@ class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
   /// This method is called when the "Start Game" button is pressed. It
   /// navigates to the [GameScreen] and passes the list of players.
   void _startGame() {
-    if (_players.length == 2) {
+    // Update players with the latest names from controllers before starting.
+    _updatePlayer(0, _player1NameController.text.trim());
+    _updatePlayer(1, _player2NameController.text.trim());
+
+    if (_player1 != null && _player2 != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => GameScreen(players: _players)),
+        MaterialPageRoute(
+          builder: (context) => GameScreen(players: [_player1!, _player2!]),
+        ),
       );
     }
-  }
-
-  /// Builds the color selection UI.
-  ///
-  /// This widget displays a grid of colors that users can choose from.
-  Widget _buildPlayerSelection() {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: List.generate(_playerColors.length, (index) {
-        final color = _playerColors[index];
-        final isSelected = _players.any((p) => p.homeIndex == index);
-
-        return GestureDetector(
-          onTap: () {
-            if (!isSelected) {
-              _addPlayer(color, index);
-            }
-          },
-          child: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: isSelected ? color.withOpacity(0.5) : color,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child:
-                isSelected
-                    ? const Icon(Icons.check, color: Colors.white)
-                    : null,
-          ),
-        );
-      }),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Players'),
+        title: const Text('Setup Your Cosmic Duel'),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -131,62 +91,73 @@ class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Text field for player name input.
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Player Name',
-                border: OutlineInputBorder(),
-              ),
+            // Player 1 input.
+            _buildPlayerInput(
+              controller: _player1NameController,
+              playerColor: _playerColors[0],
+              label: 'Player 1 (Blue)',
             ),
             const SizedBox(height: 20),
-            // Color selection section.
-            const Text(
-              'Choose your color:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // Player 2 input.
+            _buildPlayerInput(
+              controller: _player2NameController,
+              playerColor: _playerColors[1],
+              label: 'Player 2 (Red)',
             ),
-            const SizedBox(height: 10),
-            _buildPlayerSelection(),
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 10),
-            // List of added players.
-            Text(
-              'Players (${_players.length}/2):',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _players.length,
-                itemBuilder: (context, index) {
-                  final player = _players[index];
-                  return Card(
-                    child: ListTile(
-                      leading: CircleAvatar(backgroundColor: player.color),
-                      title: Text(player.name),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: () => _removePlayer(player.homeIndex),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
+            const Spacer(),
             // Button to start the game.
             ElevatedButton(
-              // The button is disabled if there are not exactly 2 players.
-              onPressed: _players.length == 2 ? _startGame : null,
+              onPressed: () {
+                if (_player1NameController.text.trim().isNotEmpty &&
+                    _player2NameController.text.trim().isNotEmpty) {
+                  _startGame();
+                } else {
+                  // Optional: Show a snackbar or alert to inform the user to fill in names.
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter names for both players.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 textStyle: const TextStyle(fontSize: 18),
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
-              child: const Text('Start Game'),
+              child: const Text('Start Cosmic Battle'),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
+    );
+  }
+
+  /// Builds a player input section with a text field and color indicator.
+  Widget _buildPlayerInput({
+    required TextEditingController controller,
+    required Color playerColor,
+    required String label,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CircleAvatar(
+            backgroundColor: playerColor,
+            radius: 12,
+          ),
+        ),
+      ),
+      onChanged: (name) {
+        // You could update the player object in real time if you want,
+        // but updating on "Start Game" press is also fine.
+      },
     );
   }
 }
