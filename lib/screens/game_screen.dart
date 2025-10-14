@@ -427,13 +427,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   // Builds the out-of-play area for a player.
-  Widget buildOutOfPlayArea(int homeIndex, Alignment alignment) {
+  Widget buildOutOfPlayArea(int homeIndex, Alignment alignment, bool isHorizontal) {
     int playerIndex = players.indexWhere((p) => p.homeIndex == homeIndex);
     if (playerIndex == -1) return const SizedBox.shrink();
 
     return Container(
       alignment: alignment,
-      child: homeIndex == 0 || homeIndex == 2
+      child: isHorizontal
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -528,208 +528,285 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Stack(
-          children: [
-            // Creates a starry background.
-            Positioned.fill(
-              child: AnimatedContainer(
-                duration: const Duration(seconds: 5),
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    colors: [Colors.black.withOpacity(0.8), Colors.transparent],
-                    center: Alignment.center,
-                  ),
-                ),
-                child: CustomPaint(painter: StarryBackgroundPainter()),
-              ),
-            ),
-            SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Builds the out-of-play areas for each player.
-                      buildOutOfPlayArea(3, Alignment.centerLeft), // Green
-                      const SizedBox(width: 20),
-                      Column(
-                        children: [
-                          buildOutOfPlayArea(2, Alignment.center), // Red
-                          // Builds the game board.
-                          GameBoard(
-                            players: players,
-                            currentPlayer: currentPlayer,
-                            pieceAnimation: _pieceAnimation,
-                            onPieceTapped: (playerIndex, pieceIndex) {
-                              if (!isRolling &&
-                                  diceRoll > 0 &&
-                                  playerIndex == currentPlayer) {
-                                movePiece(
-                                  playerIndex,
-                                  pieceIndex,
-                                  isShortcut: hasUsedBoostThisTurn &&
-                                      status.contains('shortcut'),
-                                );
-                              }
-                            },
-                          ),
-                          buildOutOfPlayArea(0, Alignment.center), // Blue
-                        ],
-                      ),
-                      const SizedBox(width: 20),
-                      buildOutOfPlayArea(1, Alignment.centerRight), // Yellow
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // The button to roll the dice.
-                      ElevatedButton(
-                        onPressed:
-                            diceRoll == 0 && !isRolling ? rollDice : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                        ),
-                        child: const Text(
-                          'Roll Dice',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // The dice widget.
-                      Dice(
-                        animation: _diceAnimation,
-                        isRolling: isRolling,
-                        diceRoll: diceRoll,
-                      ),
-                      const SizedBox(width: 10),
-                      // The buttons to use the cosmic boosts.
-                      ElevatedButton(
-                        onPressed: diceRoll != 0 &&
-                                players[currentPlayer].cosmicBoosts > 0 &&
-                                !hasUsedBoostThisTurn &&
-                                !isRolling
-                            ? () => useCosmicBoost('reroll')
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                        ),
-                        child: const Text(
-                          'Reroll',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: diceRoll != 0 &&
-                                players[currentPlayer].cosmicBoosts > 0 &&
-                                !hasUsedBoostThisTurn &&
-                                !isRolling
-                            ? () => useCosmicBoost('shortcut')
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                        ),
-                        child: const Text(
-                          'Shortcut',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: diceRoll != 0 &&
-                                players[currentPlayer].cosmicBoosts > 0 &&
-                                !hasUsedBoostThisTurn &&
-                                !isRolling
-                            ? () => useCosmicBoost('double')
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                        ),
-                        child: const Text(
-                          'Double',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // The button to reset the game.
-                      ElevatedButton(
-                        onPressed: !isRolling ? resetGame : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        child: const Text(
-                          'Reset',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Displays the number of cosmic boosts the current player has.
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Cosmic Boosts: ',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(color: Colors.yellow, blurRadius: 5),
-                          ],
-                        ),
-                      ),
-                      for (int i = 0; i < players[currentPlayer].cosmicBoosts; i++)
-                        const Icon(Icons.star, color: Colors.yellow, size: 20),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Displays the current player's turn and score.
-                  AnimatedBuilder(
-                    animation: _indicatorAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: _indicatorAnimation.value,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: players[currentPlayer].color.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            "${players[currentPlayer].name}'s Turn (Score: ${players[currentPlayer].score})",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  // Displays the status message.
-                  Text(
-                    status,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
-                      shadows: [Shadow(color: Colors.yellow, blurRadius: 5)],
+        child: LayoutBuilder(builder: (context, constraints) {
+          bool isWide = constraints.maxWidth > 600;
+          return Stack(
+            children: [
+              // Creates a starry background.
+              Positioned.fill(
+                child: AnimatedContainer(
+                  duration: const Duration(seconds: 5),
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+                      center: Alignment.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 20),
+                  child: CustomPaint(painter: StarryBackgroundPainter()),
+                ),
+              ),
+              SingleChildScrollView(
+                child: isWide ? _buildWideLayout() : _buildNarrowLayout(),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildWideLayout() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            buildOutOfPlayArea(3, Alignment.center, false), // Green
+            const SizedBox(height: 20),
+            buildOutOfPlayArea(1, Alignment.center, false), // Yellow
+          ],
+        ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Builds the out-of-play areas for each player.
+                buildOutOfPlayArea(2, Alignment.center, true), // Red
+              ],
+            ),
+            // Builds the game board.
+            GameBoard(
+              players: players,
+              currentPlayer: currentPlayer,
+              pieceAnimation: _pieceAnimation,
+              onPieceTapped: (playerIndex, pieceIndex) {
+                if (!isRolling &&
+                    diceRoll > 0 &&
+                    playerIndex == currentPlayer) {
+                  movePiece(
+                    playerIndex,
+                    pieceIndex,
+                    isShortcut: hasUsedBoostThisTurn &&
+                        status.contains('shortcut'),
+                  );
+                }
+              },
+            ),
+            buildOutOfPlayArea(0, Alignment.center, true), // Blue
+            const SizedBox(height: 20),
+            _buildControls(),
+            const SizedBox(height: 10),
+            _buildStatusIndicators(),
+            const SizedBox(height: 20),
+          ],
+        ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            buildOutOfPlayArea(2, Alignment.center, false), // Red
+            const SizedBox(height: 20),
+            buildOutOfPlayArea(0, Alignment.center, false), // Blue
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNarrowLayout() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Builds the out-of-play areas for each player.
+            buildOutOfPlayArea(3, Alignment.centerLeft, false), // Green
+            const SizedBox(width: 20),
+            Column(
+              children: [
+                buildOutOfPlayArea(2, Alignment.center, true), // Red
+                // Builds the game board.
+                GameBoard(
+                  players: players,
+                  currentPlayer: currentPlayer,
+                  pieceAnimation: _pieceAnimation,
+                  onPieceTapped: (playerIndex, pieceIndex) {
+                    if (!isRolling &&
+                        diceRoll > 0 &&
+                        playerIndex == currentPlayer) {
+                      movePiece(
+                        playerIndex,
+                        pieceIndex,
+                        isShortcut: hasUsedBoostThisTurn &&
+                            status.contains('shortcut'),
+                      );
+                    }
+                  },
+                ),
+                buildOutOfPlayArea(0, Alignment.center, true), // Blue
+              ],
+            ),
+            const SizedBox(width: 20),
+            buildOutOfPlayArea(1, Alignment.centerRight, false), // Yellow
+          ],
+        ),
+        const SizedBox(height: 20),
+        _buildControls(),
+        const SizedBox(height: 10),
+        _buildStatusIndicators(),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildControls() {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        // The button to roll the dice.
+        ElevatedButton(
+          onPressed: diceRoll == 0 && !isRolling ? rollDice : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurple,
+          ),
+          child: const Text(
+            'Roll Dice',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+        // The dice widget.
+        Dice(
+          animation: _diceAnimation,
+          isRolling: isRolling,
+          diceRoll: diceRoll,
+        ),
+        // The buttons to use the cosmic boosts.
+        ElevatedButton(
+          onPressed: diceRoll != 0 &&
+                  players[currentPlayer].cosmicBoosts > 0 &&
+                  !hasUsedBoostThisTurn &&
+                  !isRolling
+              ? () => useCosmicBoost('reroll')
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+          ),
+          child: const Text(
+            'Reroll',
+            style: TextStyle(color: Colors.black),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: diceRoll != 0 &&
+                  players[currentPlayer].cosmicBoosts > 0 &&
+                  !hasUsedBoostThisTurn &&
+                  !isRolling
+              ? () => useCosmicBoost('shortcut')
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+          ),
+          child: const Text(
+            'Shortcut',
+            style: TextStyle(color: Colors.black),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: diceRoll != 0 &&
+                  players[currentPlayer].cosmicBoosts > 0 &&
+                  !hasUsedBoostThisTurn &&
+                  !isRolling
+              ? () => useCosmicBoost('double')
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+          ),
+          child: const Text(
+            'Double',
+            style: TextStyle(color: Colors.black),
+          ),
+        ),
+        // The button to reset the game.
+        ElevatedButton(
+          onPressed: !isRolling ? resetGame : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+          ),
+          child: const Text(
+            'Reset',
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusIndicators() {
+    return Column(
+      children: [
+        // Displays the number of cosmic boosts the current player has.
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Cosmic Boosts: ',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.white,
+                shadows: [
+                  Shadow(color: Colors.yellow, blurRadius: 5),
                 ],
               ),
             ),
+            for (int i = 0; i < players[currentPlayer].cosmicBoosts; i++)
+              const Icon(Icons.star, color: Colors.yellow, size: 20),
           ],
         ),
-      ),
+        const SizedBox(height: 10),
+        // Displays the current player's turn and score.
+        AnimatedBuilder(
+          animation: _indicatorAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _indicatorAnimation.value,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: players[currentPlayer].color.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "${players[currentPlayer].name}'s Turn (Score: ${players[currentPlayer].score})",
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        // Displays the status message.
+        Text(
+          status,
+          style: const TextStyle(
+            fontSize: 18,
+            color: Colors.white,
+            shadows: [Shadow(color: Colors.yellow, blurRadius: 5)],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
