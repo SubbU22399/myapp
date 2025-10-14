@@ -22,6 +22,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   // Animation controllers and animations for the pieces, dice, and indicators.
   late AnimationController _diceAnimationController;
   late Animation<double> _diceAnimation;
+  late AnimationController _starAnimationController;
+
   // The result of the dice roll.
   int diceRoll = 0;
   // Whether the dice is currently rolling.
@@ -43,6 +45,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
+    _starAnimationController = AnimationController(
+      duration: const Duration(seconds: 5),
+      vsync: this,
+    )..repeat(reverse: true);
+
     final customCurve = Curves.elasticOut;
     _diceAnimation = Tween<double>(
       begin: 0,
@@ -95,6 +102,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void dispose() {
     // Disposes the animation controllers.
     _diceAnimationController.dispose();
+    _starAnimationController.dispose();
     super.dispose();
   }
 
@@ -522,18 +530,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           return Stack(
             children: [
               Positioned.fill(
-                child: AnimatedContainer(
-                  duration: const Duration(seconds: 5),
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      colors: [Colors.black.withOpacity(0.8), Colors.transparent],
-                      center: Alignment.center,
-                    ),
-                  ),
-                  child: CustomPaint(painter: StarryBackgroundPainter()),
+                child: AnimatedBuilder(
+                  animation: _starAnimationController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: StarryBackgroundPainter(animationValue: _starAnimationController.value),
+                    );
+                  },
                 ),
               ),
-              SingleChildScrollView(
+              Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: isWide ? _buildWideLayout() : _buildNarrowLayout(),
               ),
@@ -558,56 +564,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               buildOutOfPlayArea(1, Alignment.center, false), // Yellow
           ],
         ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            if (players.any((p) => p.homeIndex == 2))
-              buildOutOfPlayArea(2, Alignment.center, true), // Red
-            // Builds the game board.
-            GameBoard(
-              players: players,
-              currentPlayer: currentPlayer,
-              pieceAnimation: const AlwaysStoppedAnimation(0),
-              onPieceTapped: (playerIndex, pieceIndex) {
-                if (!isRolling &&
-                    diceRoll > 0 &&
-                    playerIndex == currentPlayer) {
-                  movePiece(
-                    playerIndex,
-                    pieceIndex,
-                    isShortcut: hasUsedBoostThisTurn &&
-                        status.contains('shortcut'),
-                  );
-                }
-              },
-            ),
-            if (players.any((p) => p.homeIndex == 0))
-              buildOutOfPlayArea(0, Alignment.center, true), // Blue
-            const SizedBox(height: 20),
-            _buildControls(),
-            const SizedBox(height: 20),
-            _buildStatusIndicators(),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNarrowLayout() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Builds the out-of-play areas for each player.
-            if (players.any((p) => p.homeIndex == 3))
-              buildOutOfPlayArea(3, Alignment.centerLeft, false), // Green
-            const SizedBox(width: 20),
-            Column(
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const SizedBox(height: 20),
                 if (players.any((p) => p.homeIndex == 2))
                   buildOutOfPlayArea(2, Alignment.center, true), // Red
                 // Builds the game board.
@@ -630,18 +592,71 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
                 if (players.any((p) => p.homeIndex == 0))
                   buildOutOfPlayArea(0, Alignment.center, true), // Blue
+                const SizedBox(height: 20),
+                _buildControls(),
+                const SizedBox(height: 20),
+                _buildStatusIndicators(),
               ],
             ),
-            const SizedBox(width: 20),
-            if (players.any((p) => p.homeIndex == 1))
-              buildOutOfPlayArea(1, Alignment.centerRight, false), // Yellow
-          ],
+          ),
         ),
-        const SizedBox(height: 20),
-        _buildControls(),
-        const SizedBox(height: 20),
-        _buildStatusIndicators(),
       ],
+    );
+  }
+
+  Widget _buildNarrowLayout() {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Builds the out-of-play areas for each player.
+              if (players.any((p) => p.homeIndex == 3))
+                buildOutOfPlayArea(3, Alignment.centerLeft, false), // Green
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  children: [
+                    if (players.any((p) => p.homeIndex == 2))
+                      buildOutOfPlayArea(2, Alignment.center, true), // Red
+                    // Builds the game board.
+                    GameBoard(
+                      players: players,
+                      currentPlayer: currentPlayer,
+                      pieceAnimation: const AlwaysStoppedAnimation(0),
+                      onPieceTapped: (playerIndex, pieceIndex) {
+                        if (!isRolling &&
+                            diceRoll > 0 &&
+                            playerIndex == currentPlayer) {
+                          movePiece(
+                            playerIndex,
+                            pieceIndex,
+                            isShortcut: hasUsedBoostThisTurn &&
+                                status.contains('shortcut'),
+                          );
+                        }
+                      },
+                    ),
+                    if (players.any((p) => p.homeIndex == 0))
+                      buildOutOfPlayArea(0, Alignment.center, true), // Blue
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
+              if (players.any((p) => p.homeIndex == 1))
+                buildOutOfPlayArea(1, Alignment.centerRight, false), // Yellow
+            ],
+          ),
+          const SizedBox(height: 20),
+          _buildControls(),
+          const SizedBox(height: 20),
+          _buildStatusIndicators(),
+        ],
+      ),
     );
   }
 
@@ -741,7 +756,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ),
         ),
         const SizedBox(height: 15),
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: players[currentPlayer].color.withOpacity(0.8),
@@ -770,24 +787,54 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 }
 
-// A custom painter that creates a starry background.
 class StarryBackgroundPainter extends CustomPainter {
+  final double animationValue;
+  final List<Star> stars;
+
+  StarryBackgroundPainter({required this.animationValue}) : stars = _generateStars(200);
+
+  static List<Star> _generateStars(int count) {
+    final random = Random();
+    return List.generate(count, (index) {
+      return Star(
+        offset: Offset(random.nextDouble(), random.nextDouble()),
+        radius: random.nextDouble() * 2.5,
+        twinkleSpeed: random.nextDouble() * 0.5 + 0.5, // Varies the speed of the twinkle
+        twinkleOffset: random.nextDouble(), // Ensures stars don't all twinkle at once
+      );
+    });
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.8);
-    final random = Random();
-    for (int i = 0; i < 150; i++) {
+    for (var star in stars) {
+      final paint = Paint()
+        ..color = Colors.white.withOpacity(
+          (0.5 + 0.5 * sin(2 * pi * (animationValue * star.twinkleSpeed + star.twinkleOffset))).clamp(0.1, 1.0),
+        );
       canvas.drawCircle(
-        Offset(
-          random.nextDouble() * size.width,
-          random.nextDouble() * size.height,
-        ),
-        random.nextDouble() * 2.5,
+        Offset(star.offset.dx * size.width, star.offset.dy * size.height),
+        star.radius,
         paint,
       );
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant StarryBackgroundPainter oldDelegate) =>
+      animationValue != oldDelegate.animationValue;
+}
+
+class Star {
+  final Offset offset;
+  final double radius;
+  final double twinkleSpeed;
+  final double twinkleOffset;
+
+  Star({
+    required this.offset,
+    required this.radius,
+    required this.twinkleSpeed,
+    required this.twinkleOffset,
+  });
 }
