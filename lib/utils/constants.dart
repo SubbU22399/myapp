@@ -1,12 +1,11 @@
+import 'path_generator.dart';
 
 // The size of the game board grid.
 const int gridSize = 7;
 // The home positions for each player.
 const List<List<int>> homes = [
   [6, 3], // Blue - Bird
-  [3, 6], // Yellow - Snake
   [0, 3], // Red - Cat
-  [3, 0], // Green - Frog
 ];
 // The safe zones on the game board.
 const List<List<int>> safeZones = [
@@ -16,6 +15,7 @@ const List<List<int>> safeZones = [
   [5, 5],
   [2, 3],
   [3, 2],
+  [3, 3],
   [4, 3],
   [3, 4],
 ];
@@ -23,49 +23,37 @@ const List<List<int>> safeZones = [
 const List<int> flag = [3, 3];
 
 // The spiral paths for each player to follow.
-final List<List<List<int>>> spiralPaths = [
-  // Blue (starts at [6, 3])
-  [
-    [6, 3], [6, 4], [6, 5], [6, 6], [5, 6], [4, 6], [3, 6], [2, 6], [1, 6], [0, 6],
-    [0, 5], [0, 4], [0, 3], [0, 2], [0, 1], [0, 0], [1, 0], [2, 0], [3, 0], [4, 0],
-    [5, 0], [6, 0], [6, 1], [6, 2], [5, 1], [4, 1], [3, 1], [2, 1], [1, 1], [1, 2],
-    [1, 3], [1, 4], [2, 5], [3, 5], [4, 5], [5, 5], [5, 4], [5, 3], [5, 2], [4, 2],
-    [3, 2], [2, 2], [2, 3], [2, 4], [3, 4], [4, 4], [4, 3], [3, 3],
-  ],
-  // Yellow (starts at [3, 6])
-  [
-    [3, 6], [2, 6], [1, 6], [0, 6], [0, 5], [0, 4], [0, 3], [0, 2], [0, 1], [0, 0],
-    [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [6, 1], [6, 2], [6, 3], [6, 4],
-    [6, 5], [6, 6], [5, 6], [4, 6], [5, 5], [4, 5], [3, 5], [2, 5], [1, 5], [1, 4],
-    [1, 3], [1, 2], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [5, 2], [5, 3], [5, 4],
-    [4, 4], [4, 3], [4, 2], [3, 2], [2, 2], [2, 3], [2, 4], [3, 3],
-  ],
-  // Red (starts at [0, 3])
-  [
-    [0, 3], [0, 2], [0, 1], [0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0],
-    [6, 1], [6, 2], [6, 3], [6, 4], [6, 5], [6, 6], [5, 6], [4, 6], [3, 6], [2, 6],
-    [1, 6], [0, 6], [0, 5], [0, 4], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [5, 4],
-    [5, 3], [5, 2], [5, 1], [4, 1], [3, 1], [2, 1], [1, 1], [1, 2], [1, 3], [1, 4],
-    [2, 4], [3, 4], [4, 4], [4, 3], [4, 2], [3, 2], [2, 2], [2, 3], [3, 3],
-  ],
-  // Green (starts at [3, 0])
-  [
-    [3, 0], [4, 0], [5, 0], [6, 0], [6, 1], [6, 2], [6, 3], [6, 4], [6, 5], [6, 6],
-    [5, 6], [4, 6], [3, 6], [2, 6], [1, 6], [0, 6], [0, 5], [0, 4], [0, 3], [0, 2],
-    [0, 1], [0, 0], [1, 0], [2, 0], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [5, 2],
-    [5, 3], [5, 4], [5, 5], [4, 5], [3, 5], [2, 5], [1, 5], [1, 4], [1, 3], [1, 2],
-    [2, 2], [2, 3], [2, 4], [3, 4], [4, 4], [4, 3], [4, 2], [3, 3],
-  ],
-];
+final List<List<List<int>>> spiralPaths = _generatePaths();
 
 // The positions of the pieces when they are out of play.
 const List<List<List<int>>> outOfPlayPositions = [
   // Blue (bottom)
-  [[7, 0], [7, 1], [7, 2], [7, 3]],
-  // Yellow (right)
-  [[0, 7], [1, 7], [2, 7], [3, 7]],
+  [
+    [7, 0],
+    [7, 1],
+    [7, 2],
+    [7, 3],
+  ],
   // Red (top)
-  [[-1, 0], [-1, 1], [-1, 2], [-1, 3]],
-  // Green (left)
-  [[0, -1], [1, -1], [2, -1], [3, -1]],
+  [
+    [-1, 0],
+    [-1, 1],
+    [-1, 2],
+    [-1, 3],
+  ],
 ];
+
+// Generates the spiral paths for all players.
+List<List<List<int>>> _generatePaths() {
+  final basePath = generateSpiralPath(gridSize);
+  return List.generate(homes.length, (i) {
+    final start = homes[i];
+    final startIndex = basePath.indexWhere(
+      (p) => p[0] == start[0] && p[1] == start[1],
+    );
+    return [
+      ...basePath.sublist(startIndex),
+      ...basePath.sublist(0, startIndex),
+    ];
+  });
+}

@@ -1,8 +1,8 @@
-
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'dice_face.dart';
 
-// A widget that represents the animated dice.
+/// A widget that represents the animated dice.
 class Dice extends StatelessWidget {
   // The animation that controls the dice roll.
   final Animation<double> animation;
@@ -22,13 +22,15 @@ class Dice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      double size = min(constraints.maxWidth, constraints.maxHeight);
+      var size = min(constraints.maxWidth, constraints.maxHeight);
 
-      // If the available space is unconstrained or too small, provide a sensible default size.
+      // If the available space is unconstrained or too small, provide a
+      // sensible default size.
       if (size.isInfinite || size < 40) {
         size = 60.0;
       }
-      // We also cap the maximum size to prevent it from being too large on wide screens.
+      // We also cap the maximum size to prevent it from being too large on wide
+      // screens.
       size = min(size, 80.0);
 
       // If the dice is rolling, display a random number between 1 and 6,
@@ -73,90 +75,12 @@ class Dice extends StatelessWidget {
               ),
               // Center the dice roll number.
               child: Center(
-                child: _DiceFace(rollValue, size: size * 0.8),
+                child: DiceFace(rollValue, size: size * 0.8),
               ),
             ),
           );
         },
       );
     });
-  }
-}
-
-class _DiceFace extends StatelessWidget {
-  final int value;
-  final double size;
-
-  const _DiceFace(this.value, {required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: switch (value) {
-        1 => _DiceDot(count: 1, size: size),
-        2 => _DiceDot(count: 2, size: size),
-        3 => _DiceDot(count: 3, size: size),
-        4 => _DiceDot(count: 4, size: size),
-        5 => _DiceDot(count: 5, size: size),
-        6 => _DiceDot(count: 6, size: size),
-        _ => const SizedBox.shrink(),
-      },
-    );
-  }
-}
-
-class _DiceDot extends StatelessWidget {
-  final int count;
-  final double size;
-
-  const _DiceDot({required this.count, required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 3,
-      mainAxisSpacing: size * 0.1,
-      crossAxisSpacing: size * 0.1,
-      children: List.generate(9, (index) {
-        return _buildDot(index);
-      }),
-    );
-  }
-
-  Widget _buildDot(int index) {
-    final bool isVisible;
-    switch (count) {
-      case 1:
-        isVisible = index == 4;
-        break;
-      case 2:
-        isVisible = index == 0 || index == 8;
-        break;
-      case 3:
-        isVisible = index == 0 || index == 4 || index == 8;
-        break;
-      case 4:
-        isVisible = index == 0 || index == 2 || index == 6 || index == 8;
-        break;
-      case 5:
-        isVisible =
-            index == 0 || index == 2 || index == 4 || index == 6 || index == 8;
-        break;
-      case 6:
-        isVisible =
-            index == 0 || index == 2 || index == 3 || index == 5 || index == 6 || index == 8;
-        break;
-      default:
-        isVisible = false;
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isVisible ? Colors.black : Colors.transparent,
-      ),
-    );
   }
 }

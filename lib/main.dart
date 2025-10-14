@@ -17,22 +17,7 @@ class CosmoQuestApp extends StatelessWidget {
     return MaterialApp(
       // Sets the application title.
       title: 'Cosmo Quest',
-      // Defines the overall theme for the application.
-      theme: FlexThemeData.dark(
-        scheme: FlexScheme.deepPurple,
-        surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
-        blendLevel: 13,
-        subThemesData: const FlexSubThemesData(
-          blendOnLevel: 20,
-          useTextTheme: true,
-          useM2StyleDividerInM3: true,
-        ),
-        visualDensity: FlexColorScheme.comfortablePlatformDensity,
-        useMaterial3: true,
-        swapLegacyOnMaterial3: true,
-        // To use the playground font, add GoogleFonts package and uncomment
-        fontFamily: GoogleFonts.orbitron().fontFamily,
-      ),
+      // Since ThemeMode is set to dark, we only need to define the dark theme.
       darkTheme: FlexThemeData.dark(
         scheme: FlexScheme.deepPurple,
         surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,

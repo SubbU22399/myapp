@@ -1,163 +1,192 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/models/player.dart';
-import 'package:myapp/utils/constants.dart';
+import '../models/player.dart';
+import '../utils/constants.dart';
 import 'game_screen.dart';
 
+/// A screen that allows users to select players for the game.
+///
+/// This screen enables users to enter their names, choose a color, and add
+/// themselves to the game. It enforces a minimum and maximum of 2
+/// players. Once the desired number of players have joined, the game can be
+/// started.
 class PlayerSelectionScreen extends StatefulWidget {
   const PlayerSelectionScreen({super.key});
 
   @override
-  _PlayerSelectionScreenState createState() => _PlayerSelectionScreenState();
+  State<PlayerSelectionScreen> createState() => _PlayerSelectionScreenState();
 }
 
 class _PlayerSelectionScreenState extends State<PlayerSelectionScreen> {
-  int _numPlayers = 2;
-  final List<TextEditingController> _nameControllers = [];
-  final List<Color> _playerColors = [Colors.blue, Colors.yellow, Colors.red, Colors.green];
-  final List<String> _playerNames = ["Player 1", "Player 2", "Player 3", "Player 4"];
-
-  @override
-  void initState() {
-    super.initState();
-    _updateNameControllers();
-  }
-
-  void _updateNameControllers() {
-    _nameControllers.clear();
-    for (int i = 0; i < _numPlayers; i++) {
-      _nameControllers.add(TextEditingController(text: _playerNames[i]));
-    }
-  }
+  // A list to hold the players that have been added to the game.
+  final List<Player> _players = [];
+  // A controller for the text field where users enter their name.
+  final _nameController = TextEditingController();
+  // A list of colors for the players.
+  final List<Color> _playerColors = const [
+    Colors.blue,
+    Colors.red,
+  ];
 
   @override
   void dispose() {
-    for (final controller in _nameControllers) {
-      controller.dispose();
-    }
+    // Dispose the controller when the widget is removed from the widget tree.
+    _nameController.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Cosmo Quest', style: Theme.of(context).textTheme.headlineMedium),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.black, Colors.blueGrey.shade900],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+  /// Adds a new player to the game.
+  ///
+  /// This method is called when a user selects a color. It validates that the
+  /// player name is not empty, the maximum number of players has not been
+  /// reached, and the selected color is not already in use.
+  void _addPlayer(Color color, int homeIndex) {
+    final playerName = _nameController.text.trim();
+    if (playerName.isNotEmpty &&
+        _players.length < 2 &&
+        !_players.any((p) => p.homeIndex == homeIndex)) {
+      setState(() {
+        _players.add(
+          Player(
+            name: playerName,
+            homeIndex: homeIndex,
+            color: color,
+            // Initialize the player's pieces to be off the board.
+            pieces: List.generate(4, (i) => outOfPlayPositions[homeIndex][i]),
           ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Select Your Warriors',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 20),
-                _buildPlayerNumberSelector(),
-                const SizedBox(height: 20),
-                _buildPlayerNameInputs(),
-                const SizedBox(height: 30),
-                _buildStartGameButton(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+        );
+        // Clear the text field after adding a player.
+        _nameController.clear();
+      });
+    }
   }
 
-  Widget _buildPlayerNumberSelector() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.deepPurple.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.yellow, width: 2),
-      ),
-      child: DropdownButton<int>(
-        value: _numPlayers,
-        items: const [
-          DropdownMenuItem(value: 2, child: Text('2 Warriors', style: TextStyle(color: Colors.white))),
-          DropdownMenuItem(value: 3, child: Text('3 Warriors', style: TextStyle(color: Colors.white))),
-          DropdownMenuItem(value: 4, child: Text('4 Warriors', style: TextStyle(color: Colors.white))),
-        ],
-        onChanged: (value) {
-          setState(() {
-            _numPlayers = value!;
-            _updateNameControllers();
-          });
-        },
-        dropdownColor: Colors.deepPurple,
-        style: Theme.of(context).textTheme.bodyLarge,
-        underline: const SizedBox(),
-        icon: const Icon(Icons.arrow_downward, color: Colors.yellow),
-      ),
-    );
+  /// Removes a player from the game.
+  ///
+  /// This method is called when a user taps the remove icon next to a player's
+  /// name.
+  void _removePlayer(int homeIndex) {
+    setState(() {
+      _players.removeWhere((p) => p.homeIndex == homeIndex);
+    });
   }
 
-  Widget _buildPlayerNameInputs() {
-    return Column(
-      children: List.generate(_numPlayers, (index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 8),
-          child: TextField(
-            controller: _nameControllers[index],
-            decoration: InputDecoration(
-              labelText: 'Player ${index + 1} Name',
-              labelStyle: TextStyle(color: _playerColors[index]),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: _playerColors[index], width: 2),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: _playerColors[index].withOpacity(0.7), width: 1),
-              ),
+  /// Starts the game.
+  ///
+  /// This method is called when the "Start Game" button is pressed. It
+  /// navigates to the [GameScreen] and passes the list of players.
+  void _startGame() {
+    if (_players.length == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => GameScreen(players: _players)),
+      );
+    }
+  }
+
+  /// Builds the color selection UI.
+  ///
+  /// This widget displays a grid of colors that users can choose from.
+  Widget _buildPlayerSelection() {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: List.generate(_playerColors.length, (index) {
+        final color = _playerColors[index];
+        final isSelected = _players.any((p) => p.homeIndex == index);
+
+        return GestureDetector(
+          onTap: () {
+            if (!isSelected) {
+              _addPlayer(color, index);
+            }
+          },
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: isSelected ? color.withOpacity(0.5) : color,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
             ),
-            style: const TextStyle(color: Colors.white),
+            child:
+                isSelected
+                    ? const Icon(Icons.check, color: Colors.white)
+                    : null,
           ),
         );
       }),
     );
   }
 
-  Widget _buildStartGameButton() {
-    return ElevatedButton(
-      onPressed: () {
-        List<Player> players = [];
-        for (int i = 0; i < _numPlayers; i++) {
-          players.add(Player(
-            name: _nameControllers[i].text,
-            color: _playerColors[i],
-            pieces: List.generate(4, (j) => outOfPlayPositions[i][j]),
-            homeIndex: i,
-          ));
-        }
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GameScreen(players: players),
-          ),
-        );
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.yellow,
-        foregroundColor: Colors.black,
-        elevation: 10,
-        shadowColor: Colors.yellow.withOpacity(0.5),
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Select Players'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
-      child: const Text('Embark on the Quest'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Text field for player name input.
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Player Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Color selection section.
+            const Text(
+              'Choose your color:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            _buildPlayerSelection(),
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 10),
+            // List of added players.
+            Text(
+              'Players (${_players.length}/2):',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _players.length,
+                itemBuilder: (context, index) {
+                  final player = _players[index];
+                  return Card(
+                    child: ListTile(
+                      leading: CircleAvatar(backgroundColor: player.color),
+                      title: Text(player.name),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        onPressed: () => _removePlayer(player.homeIndex),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Button to start the game.
+            ElevatedButton(
+              // The button is disabled if there are not exactly 2 players.
+              onPressed: _players.length == 2 ? _startGame : null,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                textStyle: const TextStyle(fontSize: 18),
+              ),
+              child: const Text('Start Game'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
