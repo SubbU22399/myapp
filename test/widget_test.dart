@@ -10,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:myapp/main.dart';
 import 'package:myapp/screens/game_screen.dart';
-import 'packagepackage:myapp/widgets/game_board.dart';
+import 'package:myapp/widgets/game_board.dart';
 
 void main() {
   testWidgets('Player Selection Screen Test', (WidgetTester tester) async {
