@@ -43,23 +43,23 @@ class GameBoard extends StatelessWidget {
           bool isSafe = safeZones.any((s) => s[0] == x && s[1] == y);
           bool isFlag = x == flag[0] && y == flag[1];
 
-          // Finds if there is a player piece in the current cell.
-          int? playerIndex;
-          int? pieceIndex;
+          // Finds all player pieces in the current cell.
+          List<Map<String, int>> piecesInCell = [];
           for (int p = 0; p < players.length; p++) {
-            int idx = players[p].pieces.indexWhere((pos) => pos[0] == x && pos[1] == y);
-            if (idx != -1) {
-              playerIndex = p;
-              pieceIndex = idx;
-              break;
+            for (int pieceIndex = 0; pieceIndex < players[p].pieces.length; pieceIndex++) {
+              if (players[p].pieces[pieceIndex][0] == x && players[p].pieces[pieceIndex][1] == y) {
+                piecesInCell.add({'playerIndex': p, 'pieceIndex': pieceIndex});
+              }
             }
           }
 
           return GestureDetector(
             onTap: () {
               // Calls the onPieceTapped callback if a piece is tapped.
-              if (playerIndex != null && pieceIndex != null) {
-                onPieceTapped(playerIndex, pieceIndex);
+              if (piecesInCell.isNotEmpty) {
+                // If there are multiple pieces, you might want to let the user select one.
+                // For simplicity, we'll just use the first one.
+                onPieceTapped(piecesInCell[0]['playerIndex']!, piecesInCell[0]['pieceIndex']!);
               }
             },
             // Styles the cell based on its type.
@@ -88,12 +88,9 @@ class GameBoard extends StatelessWidget {
                     : null,
               ),
               child: Center(
-                // Displays the animal piece if there is one in the cell.
-                child: playerIndex != null
-                    ? AnimalPiece(
-                        homeIndex: players[playerIndex].homeIndex,
-                        animation: pieceAnimation,
-                      )
+                // Displays the animal pieces if there are any in the cell.
+                child: piecesInCell.isNotEmpty
+                    ? _buildStackedPieces(piecesInCell)
                     // Displays an icon for safe zones and the flag.
                     : Text(
                         isSafe
@@ -110,6 +107,33 @@ class GameBoard extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildStackedPieces(List<Map<String, int>> pieces) {
+    if (pieces.isEmpty) return const SizedBox.shrink();
+    if (pieces.length == 1) {
+      return AnimalPiece(
+        homeIndex: players[pieces[0]['playerIndex']!].homeIndex,
+        animation: pieceAnimation,
+      );
+    }
+    return Stack(
+      alignment: Alignment.center,
+      children: List.generate(pieces.length, (i) {
+        return Positioned(
+          top: i * 10.0,
+          left: i * 10.0,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: AnimalPiece(
+              homeIndex: players[pieces[i]['playerIndex']!].homeIndex,
+              animation: pieceAnimation,
+            ),
+          ),
+        );
+      }),
     );
   }
 }

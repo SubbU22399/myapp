@@ -554,20 +554,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           children: [
             buildOutOfPlayArea(3, Alignment.center, false), // Green
             const SizedBox(height: 20),
-            buildOutOfPlayArea(1, Alignment.center, false), // Yellow
+            if (players.any((p) => p.homeIndex == 1))
+              buildOutOfPlayArea(1, Alignment.center, false), // Yellow
           ],
         ),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Builds the out-of-play areas for each player.
-                buildOutOfPlayArea(2, Alignment.center, true), // Red
-              ],
-            ),
+            if (players.any((p) => p.homeIndex == 2))
+              buildOutOfPlayArea(2, Alignment.center, true), // Red
             // Builds the game board.
             GameBoard(
               players: players,
@@ -586,19 +582,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 }
               },
             ),
-            buildOutOfPlayArea(0, Alignment.center, true), // Blue
+            if (players.any((p) => p.homeIndex == 0))
+              buildOutOfPlayArea(0, Alignment.center, true), // Blue
             const SizedBox(height: 20),
             _buildControls(),
             const SizedBox(height: 20),
             _buildStatusIndicators(),
-          ],
-        ),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            buildOutOfPlayArea(2, Alignment.center, false), // Red
-            const SizedBox(height: 20),
-            buildOutOfPlayArea(0, Alignment.center, false), // Blue
           ],
         ),
       ],
@@ -614,11 +603,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Builds the out-of-play areas for each player.
-            buildOutOfPlayArea(3, Alignment.centerLeft, false), // Green
+            if (players.any((p) => p.homeIndex == 3))
+              buildOutOfPlayArea(3, Alignment.centerLeft, false), // Green
             const SizedBox(width: 20),
             Column(
               children: [
-                buildOutOfPlayArea(2, Alignment.center, true), // Red
+                if (players.any((p) => p.homeIndex == 2))
+                  buildOutOfPlayArea(2, Alignment.center, true), // Red
                 // Builds the game board.
                 GameBoard(
                   players: players,
@@ -637,11 +628,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     }
                   },
                 ),
-                buildOutOfPlayArea(0, Alignment.center, true), // Blue
+                if (players.any((p) => p.homeIndex == 0))
+                  buildOutOfPlayArea(0, Alignment.center, true), // Blue
               ],
             ),
             const SizedBox(width: 20),
-            buildOutOfPlayArea(1, Alignment.centerRight, false), // Yellow
+            if (players.any((p) => p.homeIndex == 1))
+              buildOutOfPlayArea(1, Alignment.centerRight, false), // Yellow
           ],
         ),
         const SizedBox(height: 20),
