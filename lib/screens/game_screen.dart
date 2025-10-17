@@ -7,7 +7,7 @@ import '../widgets/dice.dart';
 import '../widgets/game_board.dart';
 
 extension on List<int> {
-  bool get isOutOfPlay => this.any((coord) => coord < 0 || coord >= gridSize);
+  bool get isOutOfPlay => any((coord) => coord < 0 || coord >= gridSize);
 }
 
 class GameScreen extends StatefulWidget {

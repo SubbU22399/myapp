@@ -1,4 +1,3 @@
-import 'dart:math';
 
 /// Generates the spiral path for the game board.
 List<List<int>> generateSpiralPath(int gridSize) {
